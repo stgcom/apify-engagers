@@ -193,16 +193,19 @@ function renderHtml(d) {
 
   // Funnel — horizontal stacked bar (purple glow)
   const funnelTotal = Math.max(d.funnel.total, 1);
+  const hasFunnelData = d.funnel.total > 0;
   const funnelSegs = [
     ["getleads", d.funnel.getleads, "var(--accent)"],
     ["apollo", d.funnel.apollo, "var(--accent2)"],
     ["prospeo", d.funnel.prospeo, "var(--accent3)"],
     ["unresolved", d.funnel.unresolved, "var(--muted)"],
   ];
-  const funnelBar = funnelSegs.map(([name, count, color]) => {
-    const width = (count / funnelTotal) * 100;
-    return `<div class="funnel-seg" style="width:${width}%;background:${color}" title="${esc(name)}: ${count}"></div>`;
-  }).join("");
+  const funnelBar = hasFunnelData
+    ? funnelSegs.map(([name, count, color]) => {
+        const width = (count / funnelTotal) * 100;
+        return `<div class="funnel-seg" style="width:${width}%;background:${color}" title="${esc(name)}: ${count}"></div>`;
+      }).join("")
+    : `<div class="funnel-empty">awaiting first run — no enrichment data yet</div>`;
   const funnelRows = [
     ["LinkedIn URLs (enriched)", d.funnel.total, "var(--text)"],
     ["GetLeads found", d.funnel.getleads, "var(--accent)"],
@@ -289,8 +292,8 @@ function renderHtml(d) {
 html { scroll-behavior:smooth; }
 body {
   background:
-    radial-gradient(1200px 600px at 80% -10%, #2a1b4e66 0%, transparent 60%),
-    radial-gradient(900px 500px at -10% 110%, #2a1b4e55 0%, transparent 55%),
+    radial-gradient(1400px 700px at 70% -10%, oklch(0.45 0.25 290 / 0.28) 0%, transparent 60%),
+    radial-gradient(900px 550px at -10% 110%, oklch(0.4 0.22 292 / 0.22) 0%, transparent 55%),
     linear-gradient(180deg, var(--bg) 0%, var(--bg2) 100%);
   background-attachment: fixed;
   color: var(--text);
@@ -298,6 +301,11 @@ body {
   min-height:100vh;
 }
 a { color: var(--accent); text-decoration:none; }
+:where(a, button, [role="button"], input, textarea, .nav-item, .rail-icon):focus-visible {
+  outline: 1px solid oklch(0.75 0.2 290);
+  outline-offset: 3px;
+  box-shadow: var(--glow-sm);
+}
 
 /* ===== Layout: control room ===== */
 .shell { display:flex; min-height:100vh; }
@@ -369,6 +377,13 @@ a { color: var(--accent); text-decoration:none; }
 .status.amber { background:#fbbf241f; color:var(--amber); border:1px solid var(--amber); box-shadow:0 0 12px #fbbf2444; }
 .status.gray { background:#6e76811f; color:var(--muted); border:1px solid var(--gray); }
 .timestamp { color:var(--muted); font-size:.78rem; }
+.run-status { display:inline-flex; align-items:center; gap:.45rem; padding:.3rem .8rem; border-radius:999px; background:var(--surface); border:1px solid var(--border); font-size:.75rem; color:var(--text2); cursor:default; }
+.run-status .rs-dot { width:8px; height:8px; border-radius:50%; background:var(--muted); }
+.run-status .rs-dot.green { background:var(--green); box-shadow:0 0 8px #4ade8044; }
+.run-status .rs-dot.red { background:var(--red); box-shadow:0 0 8px #f8717144; }
+.run-status .rs-dot.amber { background:var(--amber); box-shadow:0 0 8px #fbbf2444; }
+.run-status .rs-dot.gray { background:var(--muted); }
+.run-status a { color:var(--accent); }
 .pill {
   padding:.35rem .9rem; border-radius:999px; border:1px solid var(--border);
   background:var(--surface); color:var(--text2); font-size:.78rem; cursor:pointer; transition:all .2s;
@@ -400,7 +415,7 @@ a { color: var(--accent); text-decoration:none; }
 /* GSAP targets — initial state set in JS, never left invisible if GSAP fails */
 .gsap-ready .card, .gsap-ready tbody tr, .gsap-ready .funnel, .gsap-ready .section, .gsap-ready .hero, .gsap-ready .topbar { visibility:visible; }
 
-/* Cards + grid */
+/* Cards + grid — retained for tables */
 .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:1rem; margin-bottom:1.6rem; }
 .card {
   background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
@@ -429,14 +444,20 @@ a { color: var(--accent); text-decoration:none; }
 .stage-status.done { color:var(--green); text-shadow:0 0 8px #4ade8044; }
 .stage-status.pending { color:var(--muted); }
 
+/* Control matrix — Solix 2×2 */
+.control-matrix { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:1rem; margin-bottom:1.6rem; }
+.control-matrix .card { min-height:180px; }
+@media (max-width:900px){ .control-matrix{ grid-template-columns:1fr; } }
 /* Funnel */
 .funnel-wrap { margin-bottom:1.6rem; }
 .funnel {
   display:flex; height:14px; border-radius:7px; overflow:hidden; gap:2px;
   background:var(--surface2); box-shadow:inset 0 1px 0 #ffffff08, 0 0 12px #8b5cf633;
-  margin-bottom:1rem;
+  margin-bottom:1rem; min-height:14px;
 }
+.funnel:has(.funnel-empty) { height:2rem; align-items:center; }
 .funnel-seg { height:100%; transition:width .6s cubic-bezier(.2,.8,.2,1); }
+.funnel-empty { display:flex; align-items:center; justify-content:center; height:100%; width:100%; color:var(--muted); font-size:.75rem; font-style:italic; }
 .legend-dot { display:inline-block; width:9px; height:9px; border-radius:2px; margin-right:.5rem; vertical-align:middle; }
 table {
   width:100%; border-collapse:collapse; background:var(--surface); border:1px solid var(--border);
@@ -472,6 +493,8 @@ tbody tr:hover td { color:var(--text); }
 .btn-secondary { background:var(--surface2); color:var(--accent2); border:1px solid var(--accent3); box-shadow:none; }
 .btn-secondary:hover { box-shadow:var(--glow-sm); transform:translateY(-1px); }
 .run-extract { margin-top:.8rem; font-size:.8rem; padding:.5rem 1.1rem; }
+.run-extract.loading { opacity:.7; pointer-events:none; }
+.violet-bloom { position:absolute; inset:-1px; border-radius:inherit; background:radial-gradient(50% 50% at 50% 0%, oklch(0.7 0.28 290 / 0.35), transparent 70%); pointer-events:none; opacity:0; filter:blur(14px); }
 
 /* Settings inputs */
 .field-label { display:block; font-size:.72rem; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin:.9rem 0 .35rem; }
@@ -493,6 +516,28 @@ tbody tr:hover td { color:var(--text); }
 .icon-btn:hover { border-color:var(--accent3); color:var(--accent); box-shadow:var(--glow-sm); }
 .btn-row { display:flex; align-items:center; gap:.8rem; margin-top:1.2rem; flex-wrap:wrap; }
 .save-note { color:var(--green); font-size:.8rem; }
+
+/* Profiles upload */
+.upload-zone {
+  display:flex; align-items:center; gap:.8rem; flex-wrap:wrap;
+  padding:.9rem 1rem; margin-top:.6rem; border:1.5px dashed var(--accent3);
+  border-radius:10px; background:var(--surface2); transition:border-color .2s, box-shadow .2s;
+}
+.upload-zone.drag { border-color:var(--accent2); box-shadow:var(--glow-md); }
+.profile-count { color:var(--accent2); font-size:.85rem; font-weight:600; }
+.pending-profiles { display:flex; flex-wrap:wrap; gap:.5rem; margin-top:1rem; }
+.profile-chip {
+  display:inline-flex; align-items:center; gap:.45rem; padding:.3rem .7rem;
+  background:var(--surface3); border:1px solid var(--border-glow); border-radius:999px;
+  font-size:.8rem; color:var(--text2); animation:chipIn .3s cubic-bezier(.2,.8,.2,1) both;
+}
+.profile-chip .chip-remove {
+  cursor:pointer; color:var(--muted); font-size:.9rem; line-height:1; transition:color .15s;
+}
+.profile-chip .chip-remove:hover { color:var(--red); }
+@keyframes chipIn { from { opacity:0; transform:scale(.9); } to { opacity:1; transform:none; } }
+.profile-invalid { margin-top:.7rem; font-size:.8rem; color:var(--amber); line-height:1.5; }
+.profile-invalid .inv-line { display:block; }
 
 h2.section { font-family:var(--font-display); font-size:1rem; letter-spacing:.1em; text-transform:uppercase; color:var(--accent); margin:1.6rem 0 .9rem; }
 h2.section::before { content:"▸ "; color:var(--neon); }
@@ -561,6 +606,7 @@ h2.section::before { content:"▸ "; color:var(--neon); }
     <div class="rail-icon active" data-nav="overview" title="Overview"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg></div>
     <div class="rail-icon" data-nav="pipeline" title="Pipeline"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M5 6h14M5 18h14"/><circle cx="5" cy="6" r="2"/><circle cx="19" cy="6" r="2"/><circle cx="5" cy="18" r="2"/><circle cx="19" cy="18" r="2"/></svg></div>
     <div class="rail-icon" data-nav="engagers" title="Engagers"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21v-1a8 8 0 0 1 16 0v1"/></svg></div>
+    <div class="rail-icon" data-nav="profiles" title="Profiles"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12M5 10l7 7 7-7"/><path d="M5 21h14"/></svg></div>
     <div class="rail-icon" data-nav="enrich" title="Enrichment"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l7 4-7 4-7-4 7-4z"/><path d="M5 12l7 4 7-4M5 17l7 4 7-4"/></svg></div>
     <div class="rail-icon" data-nav="validate" title="Validation"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3l8 4v5c0 5-3.5 8-8 9-4.5-1-8-4-8-9V7l8-4z"/><path d="M9 12l2 2 4-4"/></svg></div>
     <div class="rail-icon" data-nav="handoff" title="Handoff"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M4 4l8 8 8-8M4 20l8-8 8 8"/></svg></div>
@@ -573,6 +619,7 @@ h2.section::before { content:"▸ "; color:var(--neon); }
     <div class="nav-item active" data-target="overview">Overview <span class="chev">▶</span></div>
     <div class="nav-item" data-target="pipeline">Pipeline Stages <span class="chev">▶</span></div>
     <div class="nav-item" data-target="engagers">Engagers <span class="chev">▶</span></div>
+    <div class="nav-item" data-target="profiles">Upload Profiles <span class="chev">▶</span></div>
     <div class="nav-item" data-target="enrich">Enrichment <span class="chev">▶</span></div>
     <div class="nav-item" data-target="validate">Validation <span class="chev">▶</span></div>
     <div class="nav-item" data-target="handoff">Handoff / Output <span class="chev">▶</span></div>
@@ -593,6 +640,7 @@ h2.section::before { content:"▸ "; color:var(--neon); }
       </div>
       <div class="topbar-right">
         <div class="timestamp">generated ${esc(d.generatedAt)}</div>
+        <div class="run-status" id="run-status" title="Latest GitHub Actions run"><span class="rs-dot gray"></span><span class="rs-text">run status…</span></div>
         <button class="pill" data-range="7">Last 7 days</button>
         <button class="pill active" data-range="30">Last 30 days</button>
         <span class="status ${statusClass}">${statusLabel}</span>
@@ -617,13 +665,11 @@ h2.section::before { content:"▸ "; color:var(--neon); }
         </div>
       </div>
 
-      <h2 class="section">Stage Telemetry</h2>
-      <div class="grid">${stageCards}</div>
-
-      <h2 class="section">Enrichment Funnel</h2>
-      <div class="card funnel-wrap">
-        <div class="funnel">${funnelBar}</div>
-        <table><tbody>${funnelRows}</tbody></table>
+      <div class="control-matrix">
+        <div class="card"><h3>Funnel health</h3><div class="funnel">${funnelBar}</div><table><tbody>${funnelRows}</tbody></table></div>
+        <div class="card"><h3>Stage telemetry</h3><div class="grid">${stageCards}</div></div>
+        <div class="card"><h3>Lead readiness</h3><p>${d.counts.good} validated · ${d.counts.verified} verified · ${d.counts.engagers} engagers</p></div>
+        <div class="card"><h3>Risk / quarantine</h3><p>${d.quarantined.length} quarantined · ${d.counts.risky} risky · ${d.counts.bad} bad</p></div>
       </div>
     </section>
 
@@ -696,6 +742,41 @@ h2.section::before { content:"▸ "; color:var(--neon); }
       </table>
     </section>
 
+    <section id="profiles" hidden>
+      <h2 class="section">Upload LinkedIn Profiles</h2>
+      <div class="card" style="max-width:760px;margin-bottom:1.4rem">
+        <div class="sub" style="color:var(--muted);line-height:1.6;margin-bottom:1rem">
+          Add profiles to the widening pass (profile-reactions actor). Paste a
+          list, upload a file, or add one at a time. Everything is parsed,
+          normalized, and deduped in your browser — nothing is sent until you
+          hit <span style="color:var(--accent)">Run Extract</span>.
+        </div>
+
+        <label class="field-label" for="profile-paste">Paste list (URLs, slugs, or CSV)</label>
+        <textarea id="profile-paste" class="input textarea" rows="5" placeholder="https://www.linkedin.com/in/satyanadella/&#10;williamhgates&#10;&quot;Jane Doe&quot;,janedoe,CEO"></textarea>
+
+        <div class="upload-zone" id="profile-drop">
+          <input type="file" id="profile-file" accept=".txt,.csv,.json" hidden>
+          <button class="btn btn-secondary" id="profile-file-btn" type="button">Upload .txt / .csv / .json</button>
+          <span class="sub" style="color:var(--muted);font-size:.78rem">or drag &amp; drop here</span>
+        </div>
+
+        <div class="field-row" style="margin-top:.6rem">
+          <input type="text" id="profile-manual" class="input" placeholder="Add one profile URL or slug…" autocomplete="off">
+          <button class="btn" id="profile-add" type="button">Add</button>
+        </div>
+
+        <div class="btn-row" style="margin-top:.8rem">
+          <button class="btn" id="profile-parse" type="button">Parse list above</button>
+          <button class="btn btn-secondary" id="profile-clear" type="button">Clear all</button>
+          <span class="profile-count" id="profile-count"></span>
+        </div>
+
+        <div class="pending-profiles" id="profile-list"></div>
+        <div class="profile-invalid" id="profile-invalid"></div>
+      </div>
+    </section>
+
     <section id="settings" hidden>
       <h2 class="section">Settings / Inputs</h2>
       <div class="card" style="max-width:720px;margin-bottom:1.4rem">
@@ -729,7 +810,18 @@ h2.section::before { content:"▸ "; color:var(--neon); }
         <label class="field-label" for="inp-mv">MILLIONVERIFIER_API_KEY</label>
         <input type="password" id="inp-mv" class="input" placeholder="millionverifier key" autocomplete="off">
 
-        <label class="field-label" for="inp-posts">Tracked post URLs (one per line)</label>
+        <label class="field-label" for="inp-ghtoken">GITHUB_TOKEN <span style="color:var(--accent)">(needed for one-click Run Extract)</span></label>
+        <div class="field-row">
+          <input type="password" id="inp-ghtoken" class="input" placeholder="ghp_... or github_pat_..." autocomplete="off">
+          <button class="icon-btn" id="toggle-ghtoken" title="Show/hide">👁</button>
+        </div>
+        <div class="sub" style="color:var(--muted);margin-top:.35rem;font-size:.75rem">
+          A fine-grained PAT with "Actions: read/write" on the repo enables the
+          Run Extract button to dispatch the workflow directly. Stored in this
+          browser only.
+        </div>
+
+        <label class="field-label" for="inp-posts">Tracked post URLs (for post-level extraction)</label>
         <textarea id="inp-posts" class="input textarea" rows="6" placeholder="https://www.linkedin.com/posts/...&#10;https://www.linkedin.com/posts/..."></textarea>
 
         <div class="btn-row">
@@ -777,9 +869,17 @@ h2.section::before { content:"▸ "; color:var(--neon); }
   navItems.forEach(n => n.addEventListener('click', () => showSection(n.dataset.target)));
   railIcons.forEach(r => r.addEventListener('click', () => showSection(r.dataset.nav)));
 
+  // Date-range pills: toggle active state; filtering is applied when rows carry
+  // timestamps (pipeline currently writes tables without a per-row date).
+  document.querySelectorAll('.pill[data-range]').forEach(p => {
+    p.addEventListener('click', () => {
+      document.querySelectorAll('.pill[data-range]').forEach(x => x.classList.toggle('active', x === p));
+    });
+  });
+
   // ---- Settings / inputs ----
-  const KEYS = ['apify', 'exa', 'getleads', 'apollo', 'prospeo', 'mv'];
-  const KEY_ENV = { apify:'APIFY_TOKEN', exa:'EXA_API_KEY', getleads:'GETLEADS_API_KEY', apollo:'APOLLO_API_KEY', prospeo:'PROSPEO_API_KEY', mv:'MILLIONVERIFIER_API_KEY' };
+  const KEYS = ['apify', 'exa', 'getleads', 'apollo', 'prospeo', 'mv', 'ghtoken'];
+  const KEY_ENV = { apify:'APIFY_TOKEN', exa:'EXA_API_KEY', getleads:'GETLEADS_API_KEY', apollo:'APOLLO_API_KEY', prospeo:'PROSPEO_API_KEY', mv:'MILLIONVERIFIER_API_KEY', ghtoken:'GITHUB_TOKEN' };
   const KEY_EL = id => document.getElementById(id);
   const VAL = id => (KEY_EL(id) ? KEY_EL(id).value.trim() : '');
   const loadSettings = () => {
@@ -830,12 +930,229 @@ h2.section::before { content:"▸ "; color:var(--neon); }
       btn.textContent = show ? '🙈' : '👁';
     });
   };
-  ['apify', 'exa'].forEach(k => bindToggle(k, 'inp-' + k));
+  ['apify', 'exa', 'ghtoken'].forEach(k => bindToggle(k, 'inp-' + k));
   const saveBtn = KEY_EL('save-settings');
   if (saveBtn) saveBtn.addEventListener('click', saveSettings);
   const exportBtn = KEY_EL('export-env');
   if (exportBtn) exportBtn.addEventListener('click', exportEnv);
   loadSettings();
+
+  // ---- Upload Profiles panel ----
+  const esc2 = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+  let pendingProfiles = []; // { slug, source, invalid? }
+  try { pendingProfiles = JSON.parse(localStorage.getItem('dai_profiles') || '[]') || []; } catch (e) {}
+  const profEl = id => document.getElementById(id);
+
+  // Normalize one token to a LinkedIn slug, or null.
+  function normalizeProfileToken(raw) {
+    let s = String(raw || '').trim();
+    if (!s) return null;
+    // Strip surrounding quotes
+    s = s.replace(/^["']+|["']+$/g, '');
+    // CSV row "Name,url,title" → grab the cell that looks like a URL or slug
+    if (s.includes(',')) {
+      const cells = s.split(',').map(c => c.trim());
+      const urlCell = cells.find(c => /linkedin\\.com|^[a-zA-Z0-9-]{2,}$/.test(c));
+      s = urlCell || cells[0];
+    }
+    // Full URL → slug
+    const m = s.match(/linkedin\\.com\\/in\\/([A-Za-z0-9\\-_]+)/);
+    if (m) return m[1];
+    // bare slug
+    if (/^[A-Za-z0-9\-_]{2,}$/.test(s) && !s.includes(' ')) return s;
+    return null;
+  }
+
+  function renderProfiles() {
+    const list = profEl('profile-list');
+    const count = profEl('profile-count');
+    const inv = profEl('profile-invalid');
+    const valid = pendingProfiles.filter(p => p && !p.invalid).length;
+    const dups = pendingProfiles.filter(p => p && p.invalid === 'dup').length;
+    const bad = pendingProfiles.filter(p => p && p.invalid === 'invalid').length;
+    if (count) count.textContent = valid ? (valid + ' pending' + (dups || bad ? ' · ' + (dups ? dups + ' dup' : '') + (dups && bad ? ' · ' : '') + (bad ? bad + ' invalid' : '') : '')) : 'No profiles pending';
+    if (list) {
+      list.innerHTML = pendingProfiles.filter(p => p && !p.invalid).map((p, i) =>
+        '<span class="profile-chip">' + esc2(p.slug) + '<span class="chip-remove" data-i="' + i + '" title="Remove">×</span></span>'
+      ).join('');
+      list.querySelectorAll('.chip-remove').forEach(el => {
+        el.addEventListener('click', () => {
+          const idx = parseInt(el.dataset.i, 10);
+          const real = pendingProfiles.filter(p => p && !p.invalid)[idx];
+          pendingProfiles = pendingProfiles.filter(p => p !== real);
+          saveProfiles();
+        });
+      });
+    }
+    if (inv) {
+      inv.innerHTML = pendingProfiles.filter(p => p && p.invalid).map(p =>
+        '<span class="inv-line">⚠ ' + esc2(p.raw || p.slug) + (p.invalid === 'dup' ? ' (duplicate, skipped)' : ' (invalid)') + '</span>'
+      ).join('');
+    }
+  }
+
+  function saveProfiles() {
+    try { localStorage.setItem('dai_profiles', JSON.stringify(pendingProfiles)); } catch (e) {}
+    renderProfiles();
+  }
+
+  function addProfiles(tokens) {
+    const seen = new Set(pendingProfiles.filter(p => p && !p.invalid).map(p => p.slug.toLowerCase()));
+    let added = 0;
+    for (const raw of tokens) {
+      const slug = normalizeProfileToken(raw);
+      if (!slug) { pendingProfiles.push({ slug: String(raw).slice(0, 40), invalid: 'invalid', raw: String(raw).slice(0, 60) }); continue; }
+      if (seen.has(slug.toLowerCase())) { pendingProfiles.push({ slug, invalid: 'dup', raw }); continue; }
+      seen.add(slug.toLowerCase());
+      pendingProfiles.push({ slug, source: 'upload' });
+      added++;
+    }
+    saveProfiles();
+    return added;
+  }
+
+  const parseBtn = profEl('profile-parse');
+  if (parseBtn) parseBtn.addEventListener('click', () => {
+    const text = profEl('profile-paste') ? profEl('profile-paste').value : '';
+    const tokens = text.split(/[\\r\\n,]+/).map(t => t.trim()).filter(Boolean);
+    if (!tokens.length) { alert('Paste some profile URLs, slugs, or CSV first.'); return; }
+    addProfiles(tokens);
+    if (profEl('profile-paste')) profEl('profile-paste').value = '';
+  });
+
+  const addBtn = profEl('profile-add');
+  if (addBtn) addBtn.addEventListener('click', () => {
+    const inp = profEl('profile-manual');
+    if (inp && inp.value.trim()) { addProfiles([inp.value]); inp.value = ''; }
+  });
+
+  const clearBtn = profEl('profile-clear');
+  if (clearBtn) clearBtn.addEventListener('click', () => { pendingProfiles = []; saveProfiles(); });
+
+  // File upload (button + drag-drop)
+  const fileBtn = profEl('profile-file-btn');
+  const fileInput = profEl('profile-file');
+  const dropZone = profEl('profile-drop');
+  if (fileBtn && fileInput) fileBtn.addEventListener('click', () => fileInput.click());
+  if (fileInput) fileInput.addEventListener('change', () => {
+    const f = fileInput.files && fileInput.files[0];
+    if (f) readProfileFile(f);
+    fileInput.value = '';
+  });
+  if (dropZone) {
+    ['dragenter', 'dragover'].forEach(ev => dropZone.addEventListener(ev, e => { e.preventDefault(); dropZone.classList.add('drag'); }));
+    ['dragleave', 'drop'].forEach(ev => dropZone.addEventListener(ev, e => { e.preventDefault(); dropZone.classList.remove('drag'); }));
+    dropZone.addEventListener('drop', e => {
+      const f = e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0];
+      if (f) readProfileFile(f);
+    });
+  }
+  function readProfileFile(f) {
+    const reader = new FileReader();
+    reader.onload = () => {
+      let tokens = [];
+      const name = (f.name || '').toLowerCase();
+      try {
+        if (name.endsWith('.json')) {
+          const j = JSON.parse(reader.result);
+          (Array.isArray(j) ? j : [j]).forEach(item => {
+            if (typeof item === 'string') tokens.push(item);
+            else if (item && typeof item === 'object') tokens.push(item.url || item.profileUrl || item.linkedinUrl || item.profile_url || '');
+          });
+        } else {
+          tokens = String(reader.result).split(/[\\r\\n,]+/).map(t => t.trim()).filter(Boolean);
+        }
+      } catch (err) { alert('Could not parse file: ' + err.message); return; }
+      const n = addProfiles(tokens);
+      alert(n + ' profile(s) added from ' + f.name);
+    };
+    reader.readAsText(f);
+  }
+
+  renderProfiles();
+
+  const GH_REPO = '${esc(GH_REPO)}';
+  const runBtn = KEY_EL('run-extract');
+  if (runBtn) {
+    runBtn.addEventListener('click', async (ev) => {
+      ev.preventDefault();
+      const token = VAL('inp-ghtoken');
+      if (!token) {
+        alert('Set GITHUB_TOKEN in Settings → Inputs first (fine-grained PAT with Actions read/write).');
+        return;
+      }
+      const profiles = pendingProfiles.filter(p => p && !p.invalid).map(p => p.slug).join(',');
+      const inputs = profiles ? { profiles } : {};
+
+      // First fetch the workflow id by name (or fall back to the known one).
+      let workflowId = '329905347';
+      try {
+        const wf = await fetch('https://api.github.com/repos/' + GH_REPO + '/actions/workflows', {
+          headers: { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json' },
+        });
+        if (wf.ok) {
+          const j = await wf.json();
+          const w = (j.workflows || []).find(x => x.path === '.github/workflows/extract.yml');
+          if (w) workflowId = String(w.id);
+        }
+      } catch (e) {}
+
+      runBtn.classList.add('loading');
+      runBtn.textContent = 'Dispatching…';
+      try {
+        const res = await fetch('https://api.github.com/repos/' + GH_REPO + '/actions/workflows/' + workflowId + '/dispatches', {
+          method: 'POST',
+          headers: { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json', 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ref: 'main', inputs }),
+        });
+        if (res.ok) {
+          runBtn.textContent = 'Dispatched ✓';
+          setTimeout(() => { runBtn.textContent = 'Run Extract ▸'; runBtn.classList.remove('loading'); }, 3000);
+        } else {
+          const err = await res.text().catch(() => '');
+          runBtn.textContent = 'Failed';
+          alert('Dispatch failed (' + res.status + '): ' + err.slice(0, 200));
+          setTimeout(() => { runBtn.textContent = 'Run Extract ▸'; runBtn.classList.remove('loading'); }, 3000);
+        }
+      } catch (e) {
+        runBtn.textContent = 'Failed';
+        alert('Network error: ' + e.message);
+        setTimeout(() => { runBtn.textContent = 'Run Extract ▸'; runBtn.classList.remove('loading'); }, 3000);
+      }
+    });
+  }
+
+  // ---- Live workflow run status ----
+  const runStatus = KEY_EL('run-status');
+  if (runStatus) {
+    (async () => {
+      const token = VAL('inp-ghtoken');
+      const rsDot = runStatus.querySelector('.rs-dot');
+      const rsText = runStatus.querySelector('.rs-text');
+      if (!token) {
+        rsDot.className = 'rs-dot gray';
+        rsText.textContent = 'set GITHUB_TOKEN for run status';
+        return;
+      }
+      try {
+        const res = await fetch('https://api.github.com/repos/' + GH_REPO + '/actions/workflows/329905347/runs?per_page=1', {
+          headers: { Authorization: 'Bearer ' + token, Accept: 'application/vnd.github+json' },
+        });
+        if (!res.ok) throw new Error('http ' + res.status);
+        const j = await res.json();
+        const run = j.workflow_runs && j.workflow_runs[0];
+        if (!run) { rsDot.className = 'rs-dot gray'; rsText.textContent = 'no runs yet'; return; }
+        const ok = run.conclusion === 'success';
+        const running = run.status === 'in_progress' || run.status === 'queued';
+        rsDot.className = 'rs-dot ' + (running ? 'amber' : (ok ? 'green' : 'red'));
+        rsText.innerHTML = (running ? 'running…' : (ok ? 'last run ✓' : 'last run ✗')) +
+          ' · <a href="' + run.html_url + '" target="_blank" rel="noopener">#' + String(run.id).slice(-6) + '</a>';
+      } catch (e) {
+        rsDot.className = 'rs-dot gray';
+        rsText.textContent = 'run status unavailable';
+      }
+    })();
+  }
 
   // Export CSV client-side
   window.exportCsv = function(prefix, rows) {
