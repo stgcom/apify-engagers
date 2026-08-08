@@ -47,3 +47,15 @@ jobs:
             engagers-*.json
             engagers-*.csv
           if-no-files-found: warn
+
+      # Closed loop: rebuild the static site from the fresh artifacts and
+      # surge-publish so the deployed dashboard reflects this run.
+      - name: Regenerate web + deploy to Surge
+        run: |
+          npm run web:generate
+          npm install --no-save surge
+          npx surge web/ --domain ${{ vars.SURGE_DOMAIN || 'apify-engagers.surge.sh' }}
+        env:
+          SURGE_LOGIN: ${{ secrets.SURGE_LOGIN }}
+          SURGE_TOKEN: ${{ secrets.SURGE_TOKEN }}
+        continue-on-error: true
