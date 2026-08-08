@@ -1,0 +1,9 @@
+node_modules/
+.env
+output/
+engagers-*.json
+engagers-*.csv
+enriched-*.json
+verified-*.json
+web/
+npmrc-blank

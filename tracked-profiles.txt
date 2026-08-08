@@ -1,0 +1,7 @@
+# Tracked LinkedIn profiles for the profile-reactions widening pass (opt-in).
+# One profile slug or full URL per line. Only runs when this file has entries
+# (the apimaestro/linkedin-profile-reactions actor is paid: $5/1,000 results).
+#
+# Example:
+# satyanadella
+# https://www.linkedin.com/in/williamhgates/

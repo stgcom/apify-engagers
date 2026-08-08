@@ -1,0 +1,30 @@
+{
+  "name": "apify-engagers",
+  "version": "1.0.0",
+  "private": true,
+  "description": "LinkedIn engager extraction + enrichment pipeline (Apify -> Exa -> GetLeads/Apollo/Prospeo -> MillionVerifier)",
+  "type": "module",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "extract": "tsx src/orchestrator.ts --stage extract",
+    "resolve": "tsx src/orchestrator.ts --stage resolve",
+    "enrich": "tsx src/orchestrator.ts --stage enrich",
+    "validate": "tsx src/orchestrator.ts --stage validate",
+    "output": "tsx src/orchestrator.ts --stage output",
+    "run": "tsx src/orchestrator.ts",
+    "typecheck": "tsc --noEmit",
+    "web:generate": "node scripts/generate-web.js",
+    "web:deploy": "node deploy/deploy.mjs",
+    "web:deploy:ci": "node deploy/deploy.mjs",
+    "web:preview": "node deploy/deploy.mjs --preview"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "tsx": "^4.23.11",
+    "typescript": "^5.9.3"
+  }
+}

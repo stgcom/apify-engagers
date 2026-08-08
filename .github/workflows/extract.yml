@@ -1,0 +1,49 @@
+name: Run Extract
+
+on:
+  workflow_dispatch:
+    inputs:
+      profiles:
+        description: 'Extra profile slugs/URLs for the widening pass (comma-separated, optional)'
+        required: false
+        default: ''
+
+jobs:
+  extract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+
+      - name: Write tracked-profiles (widening pass input)
+        shell: bash
+        run: |
+          if [ -n "${{ inputs.profiles }}" ]; then
+            echo "${{ inputs.profiles }}" | tr ',' '\n' >> tracked-profiles.txt
+            echo "Appended profiles:"
+            cat tracked-profiles.txt
+          else
+            echo "No extra profiles — using tracked-profiles.txt as committed."
+          fi
+
+      - name: Run Stage 1 extract (widening pass)
+        run: npm run extract
+        env:
+          APIFY_TOKEN: ${{ secrets.APIFY_TOKEN }}
+          EXA_API_KEY: ${{ secrets.EXA_API_KEY }}
+          GETLEADS_API_KEY: ${{ secrets.GETLEADS_API_KEY }}
+          APOLLO_API_KEY: ${{ secrets.APOLLO_API_KEY }}
+          PROSPEO_API_KEY: ${{ secrets.PROSPEO_API_KEY }}
+          MILLIONVERIFIER_API_KEY: ${{ secrets.MILLIONVERIFIER_API_KEY }}
+
+      - name: Upload engagers output
+        uses: actions/upload-artifact@v4
+        with:
+          name: engagers-output
+          path: |
+            engagers-*.json
+            engagers-*.csv
+          if-no-files-found: warn
