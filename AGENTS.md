@@ -181,14 +181,24 @@ GitHub Actions — the secure relay (secrets live in GH, never in the static sit
   keys (`EXA_API_KEY`, `GETLEADS_API_KEY`, `APOLLO_API_KEY`, `PROSPEO_API_KEY`,
   `MILLIONVERIFIER_API_KEY`) are NOT set yet — add them when real values exist
   (GitHub → Settings → Secrets and variables → Actions).
-- **Button:** "Run Extract ▸" in the command center hero → links to
-  `https://github.com/stgcom/apify-engagers/actions/workflows/extract.yml`.
-  Set `GH_REPO=stgcom/apify-engagers` when generating to keep it correct.
+- **Button:** "Run Extract ▸" in the command center hero is now a **one-click
+  dispatch** — it POSTs to the GitHub Actions dispatch API directly from the
+  browser (CORS-enabled). Requires `GITHUB_TOKEN` in Settings → Inputs
+  (fine-grained PAT with "Actions: read/write" on the repo), stored in
+  localStorage. Reads profile URLs from the "Tracked post URLs" textarea and
+  passes them as the `profiles` input.
 - **Manual trigger URL:** https://github.com/stgcom/apify-engagers/actions/workflows/extract.yml
   (click "Run workflow", optionally enter comma-separated profiles).
 - **Cost/security:** manual `workflow_dispatch` only — a human always
-  authorizes Apify spend; no public paid-trigger endpoint, no secrets in the
-  site. Outputs uploaded as `engagers-output` artifact.
+  authorizes Apify spend. The PAT lives in the user's browser localStorage
+  (never in the deployed files); secrets live in GH Actions.
+- **CI path fix (IMPORTANT):** pipeline paths are resolved from `import.meta.url`
+  (repo root), NOT cwd — so the pipeline works identically locally and in GH
+  Actions (fresh checkout cwd = repo root). `ENGAGERS_DIR` = repo root,
+  `OUTPUT_DIR` = `<root>/output`. The initial workflow run failed on
+  `apify-engagers/tracked-posts.txt` (cwd-relative) until this fix.
+- **Verified end-to-end:** dispatch → run `31253423057` → success, produced
+  `engagers-output` artifact (33.9 KB).
 - **Adding a secret programmatically** (used once; keep for future keys): the
   secrets API requires libsodium sealed-box encryption with the repo's public
   key. Working approach documented in this session: `libsodium-wrappers` +
