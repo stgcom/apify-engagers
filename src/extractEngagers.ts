@@ -1,10 +1,15 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { runActor, REACTIONS_ACTOR_ID, COMMENTS_ACTOR_ID, PROFILE_REACTIONS_ACTOR_ID } from "./apifyClient.js";
 import { extractEngager, extractProfileReactionRow, dedupeKey } from "./normalize.js";
 import type { Engager } from "./types.js";
 
-export const ENGAGERS_DIR = "apify-engagers";
+// Resolve paths relative to THIS file (repo root), not cwd — so the pipeline
+// works identically locally and in CI (GitHub Actions checks out to a fresh
+// dir; cwd is the repo root there, but locally cwd may be the parent).
+const REPO_ROOT = dirname(fileURLToPath(import.meta.url)) + "/..";
+export const ENGAGERS_DIR = REPO_ROOT; // engagers-*.json + tracked-*.txt live in repo root
 export const TRACKED_POSTS_FILE = join(ENGAGERS_DIR, "tracked-posts.txt");
 export const TRACKED_PROFILES_FILE = join(ENGAGERS_DIR, "tracked-profiles.txt");
 

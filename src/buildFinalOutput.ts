@@ -1,8 +1,10 @@
 import { mkdirSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import type { EnrichedLead } from "./types.js";
 
-export const OUTPUT_DIR = "output";
+const REPO_ROOT = dirname(fileURLToPath(import.meta.url)) + "/..";
+export const OUTPUT_DIR = join(REPO_ROOT, "output");
 
 export const FINAL_COLUMNS = [
   "linkedin_url",
